@@ -1,0 +1,134 @@
+---
+title: "DDF Tracking Dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    favicon: bar-chart.png
+    logo: bar-chart.png
+    css: ddf_monitor.css
+---
+
+
+```{r global, include=FALSE}
+# load data in 'global' chunk so it can be shared by all users of the dashboard
+library(lubridate)
+library(c3)
+
+```
+
+Row {.tabset}
+-----------------------------------------------------------------------
+
+### Daily DDF Pageviews and Sessions
+    
+```{r}
+library(billboarder)
+library(dplyr)
+ddf = read.csv("/Users/john.ekedum@ibm.com/Downloads/df_ddf.csv")
+ddf$ddf_Date  =as.Date(ddf$ddf_Date)
+ddf= ddf[, c(2:9)]
+colnames(ddf) = c('Date', 'Page','Session', 'Weekday', 'Sep_Oct_Average_P', 'Percent_Change_P', 'Sep_Oct_Average_S','Percent_Change_S')
+
+ddf$Percent_Change_P = paste(round(ddf$Percent_Change_P,2),'%')
+ddf$Percent_Change_S = paste(round(ddf$Percent_Change_S,2),'%')
+ddf$Sep_Oct_Average_P <- round(ddf$Sep_Oct_Average_P)
+ddf$Sep_Oct_Average_S <- round(ddf$Sep_Oct_Average_S)
+
+# line chart
+billboarder() %>% 
+  bb_linechart(
+    data = ddf[, c("Date", "Page", "Session")], 
+    stacked = TRUE, type = 'line'
+  ) %>% 
+  bb_x_axis(tick = list(format = "%m-%d", fit = FALSE)) %>% 
+  bb_x_grid(show = FALSE) %>% 
+  bb_y_grid(show = FALSE) %>% 
+  bb_colors_manual("Page" = "#158A8C", "Session" = "#36C185") %>% 
+  bb_legend(position = "right") %>% 
+  bb_subchart(show = TRUE, size = list(height = 30)) %>% 
+  bb_labs(y = "Count")
+          
+          
+```
+
+
+
+
+###  Percentage Change in Pageviews and Sessions
+
+```{r}
+library(dplyr)
+library(kableExtra)
+library(lubridate)
+options(knitr.table.format = "html") 
+rownames(ddf) <- ddf$Date
+ddf =  ddf[ddf$Date >= '2018-11-01', ]
+ddf %>%
+  mutate(
+    Date = row.names(.),
+    Percent_Change_P = cell_spec(Percent_Change_P, "html", color = ifelse(Percent_Change_P > 0, "green", "red")),
+    Percent_Change_S = cell_spec(Percent_Change_S, "html", color = ifelse(Percent_Change_S > 0, "green", "red")),
+    Weekday = cell_spec(Weekday, "html", color = "white", align = "c", angle = 45, 
+                    background =  
+                      c("#666666", "#999999", "#BBBBBB"))) %>%
+  select(Date, Weekday, Page, Sep_Oct_Average_P, Percent_Change_P, Session, Sep_Oct_Average_S ,Percent_Change_S) %>%
+  kable(format = "html", escape = F,align = 'c') %>%
+  kable_styling("striped", full_width = F,position = 'center') 
+  
+
+
+```
+
+
+
+Row {.tabset}
+-----------------------------------------------------------------------
+
+### Daily WCA Pageviews and Sessions
+    
+```{r}
+ddf_wca = read.csv("/Users/john.ekedum@ibm.com/Downloads/df_wca.csv")
+ddf_wca$wca_Date  =as.Date(ddf_wca$wca_Date)
+ddf_wca=  ddf_wca[, c(2:4)]
+colnames(ddf_wca) = c('Date','Page','Session')
+#ddf_wca$Date = month(ddf_wca$Date) #paste0(month(ddf_wca$Date), "/", day(ddf_wca$Date))
+# line chart
+billboarder() %>% 
+  bb_linechart(
+    data = ddf_wca[, c("Date", "Page", "Session")], 
+    stacked = TRUE, type='line'
+  ) %>% 
+  bb_x_axis(tick = list(format = "%m-%d", fit = FALSE)) %>% 
+  bb_x_grid(show = FALSE) %>% 
+  bb_y_grid(show = FALSE) %>% 
+  bb_colors_manual("Page" = "#158A8C", "Session" = "#36C185") %>% 
+  bb_legend(position = "right") %>% 
+  bb_subchart(show = TRUE, size = list(height = 30)) %>% 
+  bb_labs(y = "Count")
+          
+        
+```
+   
+### Daily BTI Pageviews and Sessions
+
+```{r}
+ddf_bti = read.csv("/Users/john.ekedum@ibm.com/Downloads/df_bti.csv")
+ddf_bti$bti_Date  =as.Date(ddf_bti$bti_Date)
+ddf_bti =  ddf_bti[, c(2:4)]
+colnames(ddf_bti) = c('Date','Page','Session')
+# line chart
+billboarder() %>% 
+  bb_linechart(
+    data = ddf_bti[, c("Date", "Page", "Session")], 
+    stacked = TRUE, type='line'
+  ) %>% 
+  bb_x_axis(tick = list(format = "%m-%d", fit = FALSE)) %>% 
+  bb_x_grid(show = FALSE) %>% 
+  bb_y_grid(show = FALSE) %>% 
+  bb_colors_manual("Page" = "#158A8C", "Session" = "#36C185" ) %>% 
+  bb_legend(position = "right") %>% 
+  bb_subchart(show = TRUE, size = list(height = 30)) %>% 
+  bb_labs(
+          y = "Count")
+        
+```
